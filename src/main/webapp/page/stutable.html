@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>layui</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+		<link rel="stylesheet" href="../lib/layui-v2.6.3/css/layui.css" media="all">
+		<link rel="stylesheet" href="../css/public.css" media="all">
+
+	</head>
+	<body>
+		<div class="layuimini-container">
+			<div class="layuimini-main">
+
+				<fieldset class="table-search-fieldset">
+					<legend>搜索信息</legend>
+					<div style="margin: 10px 10px 10px 10px">
+						<form class="layui-form layui-form-pane" action="">
+							<div class="layui-form-item">
+								<div class="layui-inline">
+									<label class="layui-form-label  " style="width: 150px;">用户信息智能搜索</label>
+									<div class="layui-input-inline">
+										<input type="text" id="stuid1" name="key" autocomplete="off"
+											class="layui-input">
+									</div>
+								</div>
+
+								<div class="layui-inline">
+									<button type="submit" class="layui-btn layui-btn-primary" lay-submit
+										lay-filter="data-search-btn"><i class="layui-icon"></i> 搜 索</button>
+								</div>
+							</div>
+						</form>
+					</div>
+				</fieldset>
+
+				<script type="text/html" id="toolbarDemo">
+					<div class="layui-btn-container">
+						<button class="layui-btn layui-btn-normal layui-btn-sm data-add-btn" lay-event="add"> 添加 </button>
+						<button class="layui-btn layui-btn-sm layui-btn-danger data-delete-btn" lay-event="delete"> 删除 </button>
+					</div>
+				</script>
+
+				<table class="layui-hide" id="currentTableId" lay-filter="currentTableFilter"></table>
+
+				<script type="text/html" id="currentTableBar">
+					<a class="layui-btn layui-btn-normal layui-btn-xs data-count-edit" lay-event="edit">编辑</a>
+					<a class="layui-btn layui-btn-xs layui-btn-danger data-count-delete" lay-event="delete">删除</a>
+				</script>
+
+			</div>
+		</div>
+		<script src="../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+		<script src="../lib/jquery-3.4.1/jquery-3.4.1.min.js"></script>
+		<script>
+			layui.use(['form', 'table'], function() {
+				var $ = layui.jquery,
+					form = layui.form,
+					table = layui.table;
+
+				table.render({
+					elem: '#currentTableId',
+					url: '/dbinfo/student?method=listpage',
+					toolbar: '#toolbarDemo',
+					// url:'../api/table.json',
+
+
+					cols: [
+						[{
+								type: "checkbox",
+								width: 50
+							},
+							{
+								field: 'sno',
+								width: 180,
+								title: '学号',
+								sort: true
+							},
+							{
+								field: 'sname',
+								width: 180,
+								title: '姓名'
+							},
+							{
+								field: 'ssex',
+								width: 180,
+								title: '性别',
+								sort: true
+							},
+							{
+								field: 'sage',
+								width: 180,
+								title: '年龄',
+								sort: true
+							},
+							{
+								field: 'sdept',
+								width: 180,
+								title: '院系'
+							},
+
+							{
+								title: '操作',
+								minWidth: 150,
+								toolbar: '#currentTableBar',
+								align: "center"
+							}
+						]
+					],
+					limits: [10, 15, 20, 25, 50, 100],
+					limit: 10,
+					page: true,
+					skin: 'line'
+
+				});
+
+				// 监听搜索操作
+				form.on('submit(data-search-btn)', function(data) {
+					var result = JSON.stringify(data.field),
+						stuid = $('#stuid1');
+					layer.alert("您输入的搜索关键字为：" + stuid.val(), {
+						title: '最终的搜索信息'
+					});
+
+					//执行搜索重载
+					table.reload('currentTableId', {
+						url: '/dbinfo/student?method=searchlist',
+						page: {
+							curr: 1
+						},
+						where: {
+							// searchParams: result
+							key: stuid.val(),
+
+						}
+					}, 'data');
+
+					return false;
+				});
+
+				//监听表格复选框选择
+				table.on('checkbox(currentTableFilter)', function(obj) {
+					console.log(obj)
+				});
+				/**
+				 * toolbar监听事件
+				 */
+				table.on('toolbar(currentTableFilter)', function(obj) {
+					if (obj.event === 'add') { // 监听添加操作
+						var index = layer.open({
+							title: '添加用户',
+							type: 2,
+							shade: 0.2,
+							maxmin: true,
+							shadeClose: true,
+							area: ['100%', '100%'],
+							content: '../page/table/stuadd.html',
+						});
+						$(window).on("resize", function() {
+							layer.full(index);
+						});
+					} else if (obj.event === 'delete') { // 监听删除操作
+						var checkStatus = table.checkStatus('currentTableId'),
+							data = checkStatus.data,
+							datalen = checkStatus.data.length;
+
+
+						// layer.alert(JSON.stringify(data));
+						// console.log("stuid:"+data[0].stuId);
+						if (datalen == 0) {
+							layer.msg("您还没有选择数据，请重新选择！", {
+								icon: 5
+							});
+						} else {
+							layer.confirm('真的删除以下：' + datalen + "个用户信息吗?", function(index) {
+
+
+								//     //向服务端发送删除指令
+
+								for (var i = 0; i < datalen; i++) {
+
+									console.log("sno:" + data[i].sno);
+
+									$.ajax({
+										url: '/dbinfo/student?method=delete',
+										type: 'post',
+										data: {
+											'sno': data[i].sno
+										}, //向服务端发送删除的id
+
+										success: function(suc) {
+
+											if (suc == "200") {
+
+												layer.close(index);
+												console.log(index);
+												layer.msg("删除成功", {
+													icon: 1
+												});
+
+											} else {
+												layer.msg("删除失败", {
+													icon: 5
+												});
+											}
+										},
+										error: function(suc) {
+											alert("删除错误");
+										}
+									});
+
+
+
+								}
+
+								location.reload();
+
+								// setTimeout(3000);
+								// location.reload();
+								layer.close(index);
+							});
+						}
+
+
+					}
+				});
+
+
+
+
+				table.on('tool(currentTableFilter)', function(obj) {
+
+
+					//注：tool是工具条事件名，test是table原始容器的属性 lay-filter="对应的值"
+					var data = obj.data; //获得当前行数据
+					var layEvent = obj.event; //获得 lay-event 对应的值（也可以是表头的 event 参数对应的值）
+					var tr = obj.tr; //获得当前行 tr 的DOM对象
+
+					if (layEvent === 'detail') { //查看
+						//do somehing
+						layer.alert('学号:' + data.sno + '<br>姓名:' + data.sname + '<br>性别：' + data.ssex +
+							'<br>年龄:' + data.sage + '<br>院系:' + data.sdept);
+
+					} else if (layEvent === 'delete') { //删除
+						layer.confirm('真的删除姓名为：' + data.sname + "的用户吗?", function(index) {
+
+							//console.log(data.p_id);
+							//向服务端发送删除指令
+							console.log(data.sno);
+							$.ajax({
+								url: '/dbinfo/student?method=delete',
+								type: 'post',
+								data: {
+									'sno': data.sno
+								}, //向服务端发送删除的id
+
+								success: function(suc) {
+
+									if (suc == "200") {
+										obj.del(); //删除对应行（tr）的DOM结构，并更新缓存
+										layer.close(index);
+										console.log(index);
+										console.log(suc);
+										layer.msg("删除成功", {
+											icon: 1
+										});
+
+									} else {
+										layer.msg("删除失败", {
+											icon: 5
+										});
+									}
+								},
+								error: function(suc) {
+									alert("cwu");
+								}
+							});
+
+							layer.close(index);
+						});
+
+					} else if (layEvent === 'edit') { //编辑
+						console.log(data.sname);
+						layer.open({
+							
+							type: 2,
+							title: "编辑学生信息页面",
+							area: ['90%', '90%'],
+
+							maxmin: true,
+							shadeClose: true,
+							shade: 0.2,
+							skin: 'layui-layer-rim',
+							content: "../page/table/stuedit.html", 
+							success: function(layero, index) {
+								
+								var body = layer.getChildFrame('body', index); //少了这个是不能从父页面向子页面传值的
+								//获取子页面的元素，进行数据渲染
+								var iframeWin=layero.find('iframe')[0].contentWindow;
+								body.contents().find("#sno").val(data.sno);
+								body.contents().find("#sname").val(data.sname);
+								// 　　　　　　  body.contents().find('#ssex').val(data.ssex);
+								body.contents().find('#sage').val(data.sage);
+								body.contents().find('#sdept').val(data.sdept);
+								body.contents().find("input[name=ssex][value=男]").attr("checked", data.ssex == "男" ? true : false);
+								body.contents().find("input[name=ssex][value=女]").attr("checked", data.ssex == "女" ? true : false);
+								// body.contents().find("#ssex2").prop("checked", data.ssex == "女" ? true : false);
+								// 　　　　　　　let ssex = '#ssex' + data.ssex;
+								iframeWin.layui.form.render();
+								
+
+								
+
+							},
+
+						});
+
+						//表单值
+
+
+
+						//同步更新缓存对应的值
+						//  layer.confirm('要修改ID为：'+data.stuId+"的用户吗?", function(index){
+						//      console.log(data.inexType);
+						//      var useredit={
+						//          "userId":data.userId,
+						//          "jobNo":data.jobNo,
+						//          "userName":data.userName,
+						//          "pwd":data.pwd,
+
+						//      };
+						//      $.ajax({
+						//      url:'../page/table/edit.html',
+						//      type:'get',
+						//      data:useredit,
+						//                      //dataType:'json',
+						//                      success:function(sess){
+						//                  if(sess==200){
+						//                      layer.msg("编辑成功",{icon:1});
+						//                  }
+						//                  else{
+						//                      layer.msg("编辑失败",{icon:5});
+						//                  }
+						//              },
+						//                      error:function (xhr,status,error) {
+						//                          console.log(xhr);
+						//                          console.log(status);
+						//                          console.log(error);
+						//                      }
+						// });
+						//  });
+
+					}
+
+				});
+
+			});
+		</script>
+
+	</body>
+</html>

@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>layui</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link rel="stylesheet" href="../../lib/layui-v2.6.3/css/layui.css" media="all">
+    <link rel="stylesheet" href="../../css/public.css" media="all">
+    <style>
+        body {
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="layui-form layuimini-form">
+    <div class="layui-form-item">
+        <label class="layui-form-label required">课程号</label>
+        <div class="layui-input-block">
+            <input type="number" name="cno" id="cno" lay-verify="required" lay-reqtext="课程号不能为空" placeholder="请输入课程号" value="" class="layui-input" >
+            <tip>填写课程号。</tip>
+        </div>
+    </div>
+	<div class="layui-form-item">
+        <label class="layui-form-label required">课程名</label>
+        <div class="layui-input-block">
+            <input type="text" name="cname" id="cname" lay-verify="required" lay-reqtext="课程名不能为空" placeholder="请输入课程名" value="" class="layui-input">
+        </div>
+    </div>
+    
+    
+    <div class="layui-form-item">
+        <label class="layui-form-label">课程学分</label>
+        <div class="layui-input-block">
+            <input type="number" name="credit" id="credit" placeholder="请输入课程学分" value="" class="layui-input">
+        </div>
+    </div>
+    
+    
+
+    <div class="layui-form-item">
+        <div class="layui-input-block">
+            <button class="layui-btn layui-btn-normal" lay-submit lay-filter="saveBtn">确认保存</button>
+        </div>
+    </div>
+</div>
+<script src="../../lib/layui-v2.6.3/layui.js" charset="utf-8"></script>
+<script>
+		layui.use([ 'form' ], function() {
+			var form = layui.form, layer = layui.layer,
+
+			$ = layui.jquery;
+
+			//监听提交
+			form.on('submit(saveBtn)', function(data1) {
+				
+					var data=data1.field;
+					
+					$.ajax({
+				        url:'/dbinfo/course?method=add',
+				        type:'post',
+				        data:{
+				        	'cno' : data.cno,
+				        	'cname' : data.cname,
+				        	'credit' : data.credit,
+				             	               
+				        
+				        },//向服务端发送编辑的id
+				       success : function(data) {
+				       	console.log(data);
+				       	if (data == "200") {
+				       		var index = layer.alert(("添加成功"), {
+				       			title : '添加状态'
+				       		}, function() {
+				       			layer.close(index);
+				       			var iframeIndex = parent.layer.getFrameIndex(window.name);
+				       			console.log(iframeIndex);
+				       			parent.layer.close(iframeIndex);
+				       			parent.location.reload();
+				       		});
+				       	} else {
+				       		var index = layer.alert(("添加失败"), {
+				       			title : '添加状态'
+				       		}, function() {
+				       			layer.close(index);
+				       			var iframeIndex = parent.layer
+				       					.getFrameIndex(window.name);
+				       			console.log(iframeIndex);
+				       			parent.layer.close(iframeIndex);
+				       			parent.location.reload();
+				       		});
+				       
+				       	}
+				       
+				       }, 
+				        
+				    });		
+				
+					return false;
+			});
+
+		});
+	</script>
+</body>
+</html>
